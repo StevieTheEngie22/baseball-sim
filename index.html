@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Baseball Pro Simulator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    nav { margin-bottom: 20px; }
+    nav button { padding: 10px 20px; margin-right: 10px; cursor: pointer; }
+    section { display: none; }
+    section.active { display: block; }
+    .teams-container { display: flex; justify-content: space-between; flex-wrap: wrap; }
+    .team { width: 45%; min-width: 300px; margin-bottom: 20px; }
+    .battingOrder { list-style: none; padding: 0; }
+    .battingOrder li { display: flex; justify-content: space-between; align-items: center; padding: 5px; border-bottom: 1px solid #ccc; }
+    .playerInfo { display: inline-block; width: 70%; }
+    .controls { display: inline-block; width: 25%; }
+    .controls button { margin: 0 5px; padding: 5px; }
+    .battingOrder li { padding: 5px; cursor: move; }
+    .battingOrder li:hover { background: #f0f0f0; }
+    #scoreboard table, #boxScore table, #playerProfile table { width: 100%; max-width: 600px; border-collapse: collapse; margin: 20px auto; }
+    #scoreboard th, #scoreboard td, #boxScore th, #boxScore td, #playerProfile th, #playerProfile td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    #scoreboard th, #boxScore th, #playerProfile th { background: #f4f4f4; font-weight: bold; }
+    #boxScore table, #playerProfile table { font-size: 14px; }
+    #boxScore th:first-child, #boxScore td:first-child, #playerProfile th:first-child, #playerProfile td:first-child { text-align: left; width: 40%; }
+    #boxScore th:not(:first-child), #boxScore td:not(:first-child), #playerProfile th:not(:first-child), #playerProfile td:not(:first-child) { width: 8.57%; }
+    #boxScore tr:nth-child(even), #playerProfile tr:nth-child(even) { background: #f9f9f9; }
+    #boxScore tr:hover, #playerProfile tr:hover { background: #f0f0f0; }
+    #boxScore h2, #playerProfile h2 { margin: 15px 0 5px; text-align: center; }
+    #gameLog { max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 20px; }
+    #startGameBtn, #resetTeamsBtn, #backToGameBtn { padding: 10px 20px; cursor: pointer; display: block; margin: 10px auto; }
+    .player-link { color: #007bff; text-decoration: none; }
+    .player-link:hover { text-decoration: underline; }
+    .base { width: 20px; height: 20px; background: white; border: 2px solid black; transform: rotate(45deg); position: absolute; }
+    .base.occupied { background: red; }
+    #baseRunners { text-align: center; margin: 20px auto; width: 100px; height: 100px; position: relative; }
+    #base1 { bottom: 10px; right: 10px; }
+    #base2 { top: 10px; left: 40px; }
+    #base3 { bottom: 10px; left: 10px; }
+    #gameStatus { text-align: center; margin: 10px auto; font-weight: bold; }
+    .header { background-color: #333; color: #fff; padding: 20px; text-align: center; }
+    .header .logo { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+    .header .nav { margin-top: 20px; }
+    .header .nav button { background-color: #444; color: #fff; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    .header .nav button:hover { background-color: #555; }
+    .header .nav button.active { background-color: #666; }
+    .main { display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    .main .container { max-width: 1200px; margin: 0 auto; }
+    .section { background-color: #f9f9f9; padding: 20px; border: 1px solid #ddd; margin-bottom: 20px; }
+    .section-header { background-color: #f4f4f4; padding: 10px; border-bottom: 1px solid #ddd; }
+    .section-header h2 { margin: 0; }
+    .teams-grid { display: grid; grid-template-columns: repeat(2, 1fr); grid-gap: 20px; }
+    .team-card { background-color: #fff; padding: 20px; border: 1px solid #ddd; }
+    .team-header { background-color: #f4f4f4; padding: 10px; border-bottom: 1px solid #ddd; }
+    .team-header h3 { margin: 0; }
+    .team-content { padding: 20px; }
+    .lineup-section, .pitcher-section, .bullpen-section { margin-bottom: 20px; }
+    .game-layout { display: grid; grid-template-columns: repeat(2, 1fr); grid-gap: 20px; }
+    .game-status-card { background-color: #fff; padding: 20px; border: 1px solid #ddd; }
+    .baseball-field { position: relative; width: 100px; height: 100px; margin: 0 auto; }
+    .diamond { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .base { position: absolute; }
+    .home-plate { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; background-color: #fff; border: 2px solid #000; }
+    .scoreboard-card { background-color: #fff; padding: 20px; border: 1px solid #ddd; }
+    .scoreboard { margin-bottom: 20px; }
+    .box-scores { display: grid; grid-template-columns: repeat(2, 1fr); grid-gap: 20px; }
+    .box-score-card { background-color: #fff; padding: 20px; border: 1px solid #ddd; }
+    .table-container { overflow-x: auto; }
+    .game-log-card { background-color: #fff; padding: 20px; border: 1px solid #ddd; }
+    .game-log { margin-bottom: 20px; }
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: none; }
+    .modal-content { background-color: #fff; padding: 20px; border: 1px solid #ddd; width: 500px; margin: 40px auto; }
+    .modal-header { background-color: #f4f4f4; padding: 10px; border-bottom: 1px solid #ddd; }
+    .modal-header h3 { margin: 0; }
+    .close-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="logo">
+        <i class="fas fa-baseball-ball"></i>
+        <h1>Baseball Pro Simulator</h1>
+      </div>
+      <nav class="nav">
+        <button id="teamsTab" class="nav-btn active">
+          <i class="fas fa-users"></i>
+          <span>Teams Setup</span>
+        </button>
+        <button id="gameTab" class="nav-btn">
+          <i class="fas fa-play"></i>
+          <span>Game Simulator</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+    <div class="container">
+      <!-- Teams Setup Section -->
+      <section id="teamsPage" class="section active">
+        <div class="section-header">
+          <h2><i class="fas fa-clipboard-list"></i> Team Management</h2>
+          <p>Set up your lineups and manage your roster</p>
+        </div>
+        
+        <!-- Game Controls -->
+        <div class="section-actions">
+          <button id="startGameBtn" class="btn btn-primary">
+            <i class="fas fa-play"></i> Start Game
+          </button>
+          <button id="resetTeamsBtn" class="btn btn-secondary">
+            <i class="fas fa-refresh"></i> Reset Teams
+          </button>
+        </div>
+        
+        <div class="teams-grid">
+          <div class="team-card" id="team1">
+            <div class="team-header">
+              <h3><i class="fas fa-home"></i> Home Team</h3>
+            </div>
+            <div class="team-content">
+              <div id="team1Order" class="lineup-section"></div>
+              <div id="team1PitcherOrder" class="pitcher-section"></div>
+              <div id="team1BullpenOrder" class="bullpen-section"></div>
+            </div>
+          </div>
+          
+          <div class="team-card" id="team2">
+            <div class="team-header">
+              <h3><i class="fas fa-plane"></i> Away Team</h3>
+            </div>
+            <div class="team-content">
+              <div id="team2Order" class="lineup-section"></div>
+              <div id="team2PitcherOrder" class="pitcher-section"></div>
+              <div id="team2BullpenOrder" class="bullpen-section"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Game Simulator Section -->
+      <section id="gamePage" class="section">
+        <div class="section-header">
+          <h2><i class="fas fa-baseball-ball"></i> Live Game</h2>
+          <button id="backToGameBtn" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Teams
+          </button>
+        </div>
+        
+        <div class="game-layout">
+          <!-- Game Status -->
+          <div class="game-status-card">
+            <div id="gameStatus" class="game-status"></div>
+            <div class="baseball-field">
+              <div id="baseRunners" class="diamond">
+                <div id="base1" class="base"></div>
+                <div id="base2" class="base"></div>
+                <div id="base3" class="base"></div>
+                <div class="home-plate"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Scoreboard -->
+          <div class="scoreboard-card">
+            <h3><i class="fas fa-trophy"></i> Scoreboard</h3>
+            <div id="scoreboard" class="scoreboard">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Team</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>R</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr id="team1ScoreRow"><th>Home</th></tr>
+                  <tr id="team2ScoreRow"><th>Away</th></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Box Scores -->
+        <div class="box-scores">
+          <div class="box-score-card">
+            <h3><i class="fas fa-home"></i> Home Team Stats</h3>
+            <div class="table-container">
+              <table id="team1BoxScore">
+                <thead>
+                  <tr>
+                    <th>Player</th><th>AB</th><th>R</th><th>H</th><th>RBI</th><th>BB</th><th>SO</th><th>HR</th>
+                  </tr>
+                </thead>
+                <tbody id="team1BoxScoreBody"></tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div class="box-score-card">
+            <h3><i class="fas fa-plane"></i> Away Team Stats</h3>
+            <div class="table-container">
+              <table id="team2BoxScore">
+                <thead>
+                  <tr>
+                    <th>Player</th><th>AB</th><th>R</th><th>H</th><th>RBI</th><th>BB</th><th>SO</th><th>HR</th>
+                  </tr>
+                </thead>
+                <tbody id="team2BoxScoreBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Game Log -->
+        <div class="game-log-card">
+          <h3><i class="fas fa-list"></i> Play-by-Play</h3>
+          <div id="gameLog" class="game-log"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Player Profile Modal -->
+  <div id="playerProfile" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-user"></i> Player Profile</h3>
+        <button id="closeProfileBtn" class="close-btn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table>
+          <tbody id="playerProfileBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
